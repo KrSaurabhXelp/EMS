@@ -104,12 +104,12 @@ export const createTask = async (req: Request, res: Response) => {
                 },
             }).catch((err) => console.error("Employee notification error:", err));
 
-            // 2. Notify HR
+            // 2. Notify All (Admin, HR, etc.)
             createAndSendNotification({
                 title: "Task Assigned by Admin 📋",
                 message: `Admin assigned task #${taskCode}: "${taskTitle}" (${priority} priority) to ${employee.employeeName}.`,
                 type: "task_assigned",
-                forRole: "hr",
+                forRole: "all",
                 senderId: currentUser?.id,
                 metadata: {
                     taskId: savedTask.id,

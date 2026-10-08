@@ -12,6 +12,7 @@ import {
   updateTask as updateTaskApi,
   deleteTask as deleteTaskApi,
 } from "../../api/taskApi";
+import { triggerBrowserNotification } from "../../service/notification.service";
 
 // Shadcn UI Components
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
@@ -176,6 +177,9 @@ const Task = ({ employees = [] }: any) => {
           });
         }
         toast.success(values.status === "Completed" ? "Task completed! Notification sent to Admin 🎉" : "Task updated!");
+        triggerBrowserNotification("Task Updated! 📝", {
+          body: `Task #${taskCodeNum}: "${values.title}" marked as ${values.status}.`,
+        });
       } else {
         await createTasks({
           taskCode: taskCodeNum,
@@ -186,7 +190,10 @@ const Task = ({ employees = [] }: any) => {
           dueDate: values.dueDate,
           status: values.status,
         });
-        toast.success("Task assigned! Firebase notification dispatched to employee 🚀");
+        toast.success("Task assigned! Notification dispatched 🚀");
+        triggerBrowserNotification("New Task Assigned! 📋", {
+          body: `Task #${taskCodeNum}: "${values.title}" assigned successfully.`,
+        });
       }
 
       await fetchBackendTasks();

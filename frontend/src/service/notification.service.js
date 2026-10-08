@@ -67,6 +67,48 @@ export const listenForForegroundMessages = async (callback) => {
         });
     } catch (error) {
         console.error("Error setting up foreground message listener:", error);
-        return null;
     }
-}
+};
+
+export const triggerBrowserNotification = (title, options = {}) => {
+    try {
+        if (!("Notification" in window)) {
+            console.warn("Notifications not supported in this browser");
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            const notif = new Notification(title, {
+                icon: "/favicon.ico",
+                badge: "/favicon.ico",
+                ...options,
+            });
+
+            notif.onclick = () => {
+                window.focus();
+                if (options.onClick) options.onClick();
+            };
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                    new Notification(title, {
+                        icon: "/favicon.ico",
+                        badge: "/favicon.ico",
+                        ...options,
+                    });
+                }
+            });
+        }
+    } catch (err) {
+        console.warn("Direct Notification error, trying ServiceWorker:", err);
+        if ("serviceWorker" in navigator && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready.then((reg) => {
+                reg.showNotification(title, {
+                    icon: "/favicon.ico",
+                    badge: "/favicon.ico",
+                    ...options,
+                });
+            }).catch((swErr) => console.error("SW notification error:", swErr));
+        }
+    }
+};

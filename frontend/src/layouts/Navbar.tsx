@@ -5,7 +5,12 @@ import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { useAuthStore } from "../store/authStore";
 import { useNotificationStore } from "../store/notificationStore";
-import { listenForForegroundMessages } from "../service/notification.service";
+import {
+  listenForForegroundMessages,
+  triggerBrowserNotification,
+  requestNotificationPermission,
+} from "../service/notification.service";
+import { getNotifications } from "../api/notificationApi";
 import NotificationDrawer from "../components/NotificationDrawer";
 
 type NavbarProps = {
@@ -44,6 +49,12 @@ const Navbar = ({ onToggleSidebar }: NavbarProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  const [permStatus, setPermStatus] = useState<NotificationPermission>(
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "default"
+  );
+
   const {
     unreadCount,
     toggleDrawer,
@@ -52,6 +63,24 @@ const Navbar = ({ onToggleSidebar }: NavbarProps) => {
     fetchNotifications,
     handleRealtimeNotification,
   } = useNotificationStore();
+
+  const handleEnableNotifications = async () => {
+    const token = await requestNotificationPermission(true);
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setPermStatus(Notification.permission);
+      if (Notification.permission === "granted") {
+        triggerBrowserNotification("Browser Popups Enabled! 🔔", {
+          body: "You will now receive desktop popups for all task and employee updates.",
+        });
+        toast.success("Desktop popups enabled! 🎉");
+        if (token && user?.id) {
+          await registerFcm(user.id);
+        }
+      } else {
+        toast.error("Notification permission was not granted in browser settings.");
+      }
+    }
+  };
 
   // Setup FCM push notifications and foreground listener when logged in
   useEffect(() => {
@@ -76,13 +105,9 @@ const Navbar = ({ onToggleSidebar }: NavbarProps) => {
         },
       });
 
-      // Also trigger browser desktop notification if supported & granted
-      if (Notification.permission === "granted" && payload?.notification) {
-        new Notification(notifTitle, {
-          body: notifBody,
-          icon: "/favicon.ico",
-        });
-      }
+      triggerBrowserNotification(notifTitle, {
+        body: notifBody,
+      });
     });
 
     return () => {
@@ -91,6 +116,55 @@ const Navbar = ({ onToggleSidebar }: NavbarProps) => {
       });
     };
   }, [isLoggedIn, user?.id]);
+
+  // Real-time polling check (every 5s) to guarantee popup even if FCM push is delayed or blocked
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const knownIds = new Set<number>();
+    let isFirstRun = true;
+
+    const syncNewNotifications = async () => {
+      try {
+        const res = await getNotifications({ page: 1, limit: 15 });
+        const list = res.notifications || [];
+
+        if (isFirstRun) {
+          list.forEach((n) => knownIds.add(n.id));
+          isFirstRun = false;
+          return;
+        }
+
+        const newItems = list.filter((n) => !knownIds.has(n.id) && !n.isRead);
+        list.forEach((n) => knownIds.add(n.id));
+
+        if (newItems.length > 0) {
+          playNotificationSound();
+          fetchNotifications();
+
+          newItems.forEach((n) => {
+            toast.info(n.title, {
+              description: n.message,
+              action: {
+                label: "View",
+                onClick: () => openDrawer(),
+              },
+            });
+
+            triggerBrowserNotification(n.title, {
+              body: n.message,
+            });
+          });
+        }
+      } catch (err) {
+        // silent
+      }
+    };
+
+    syncNewNotifications();
+    const interval = setInterval(syncNewNotifications, 5000);
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -153,6 +227,19 @@ const Navbar = ({ onToggleSidebar }: NavbarProps) => {
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <>
+                {/* Enable Browser Notifications Button (if not yet granted) */}
+                {permStatus !== "granted" && (
+                  <button
+                    type="button"
+                    onClick={handleEnableNotifications}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-300 transition-colors cursor-pointer"
+                    title="Click to allow desktop browser notification popups"
+                  >
+                    <Bell size={13} className="text-amber-600 animate-bounce" />
+                    <span>Enable Popups</span>
+                  </button>
+                )}
+
                 {/* Notification Bell Button */}
                 <button
                   type="button"

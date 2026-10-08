@@ -91,12 +91,12 @@ export const createEmployees = async (req: Request, res: Response) => {
             return await manager.save(newEmployee);
         });
 
-        // Admin created employee -> notify HR
+        // Admin created employee -> notify All
         createAndSendNotification({
             title: "New Employee Created by Admin 👥",
             message: `Admin registered new employee: ${employeeName} (Code: ${employeeCode}).`,
             type: "employee_action",
-            forRole: "hr",
+            forRole: "all",
             senderId: currentUser?.id,
             metadata: { employeeId: savedEmployee.employeeId, employeeName, employeeCode },
         }).catch((err) => console.error("HR notification error:", err));
