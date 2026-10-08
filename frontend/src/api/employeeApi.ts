@@ -1,23 +1,21 @@
-import axios from "axios";
-
-const API = "http://192.168.2.237:5000/api/employees";
+import apiClient from "./client";
 
 export const getEmployees = async () => {
-    const response = await axios.get(API);
+    const response = await apiClient.get("/employees");
     return response.data;
 };
 
 export const createEmployee = async (employee: any) => {
-    const response = await axios.post(API, employee);
+    const response = await apiClient.post("/employees", employee);
     return response.data;
 };
 
 export const updateEmployee = async (id: string | number, employee: any) => {
-    const response = await axios.put(`${API}/${id}`, employee);
+    const response = await apiClient.put(`/employees/${id}`, employee);
     return response.data;
 };
 
 export const deleteEmployee = async (id: string | number) => {
-    const response = await axios.delete(`${API}/${id}`);
+    const response = await apiClient.delete(`/employees/${id}`);
     return response.data;
 };

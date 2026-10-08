@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API = "http://192.168.2.237:5000/api";
+import apiClient from "./client";
 
 export interface AppNotification {
   id: number;
@@ -35,26 +33,26 @@ export const getNotifications = async (params?: {
   limit?: number;
   filter?: string;
 }): Promise<NotificationsResponse> => {
-  const response = await axios.get(`${API}/notifications`, { params });
+  const response = await apiClient.get("/notifications", { params });
   return response.data;
 };
 
 export const markNotificationAsRead = async (id: number) => {
-  const response = await axios.patch(`${API}/notifications/${id}/read`);
+  const response = await apiClient.patch(`/notifications/${id}/read`);
   return response.data;
 };
 
 export const markAllNotificationsAsRead = async () => {
-  const response = await axios.patch(`${API}/notifications/mark-all-read`);
+  const response = await apiClient.patch("/notifications/mark-all-read");
   return response.data;
 };
 
 export const saveFcmToken = (payload: SaveTokenPayload) =>
-  axios.post(`${API}/notifications/save-token`, payload);
+  apiClient.post("/notifications/save-token", payload);
 
 export const sendTestPushNotification = (payload: {
   token?: string;
   employeeId?: number;
   title?: string;
   body?: string;
-}) => axios.post(`${API}/notifications/test`, payload);
+}) => apiClient.post("/notifications/test", payload);

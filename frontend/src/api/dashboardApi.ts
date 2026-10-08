@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API = "http://192.168.2.237:5000/api";
+import apiClient from "./client";
 
 export interface DashboardStatsResponse {
   counts: {
@@ -32,4 +30,4 @@ export interface DashboardStatsResponse {
 }
 
 export const getDashboardStats = () =>
-  axios.get<DashboardStatsResponse>(`${API}/dashboard/stats`);
+  apiClient.get<DashboardStatsResponse>("/dashboard/stats");

@@ -1,23 +1,21 @@
-import axios from "axios";
-
-const API = "http://192.168.2.237:5000/api/tasks";
+import apiClient from "./client";
 
 export const getTasks = async () => {
-    const response = await axios.get(API);
+    const response = await apiClient.get("/tasks");
     return response.data;
 };
 
 export const createTasks = async (task: any) => {
-    const response = await axios.post(API, task);
+    const response = await apiClient.post("/tasks", task);
     return response.data;
 };
 
 export const updateTask = async (id: string | number, task: any) => {
-    const response = await axios.put(`${API}/${id}`, task);
+    const response = await apiClient.put(`/tasks/${id}`, task);
     return response.data;
 };
 
 export const deleteTask = async (id: string | number) => {
-    const response = await axios.delete(`${API}/${id}`);
+    const response = await apiClient.delete(`/tasks/${id}`);
     return response.data;
 };

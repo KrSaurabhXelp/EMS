@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API = "http://192.168.2.237:5000/api/designations";
+import apiClient from "./client";
 
 export interface DesignationPayload {
   name: string;
@@ -16,20 +14,20 @@ export interface GetDesignationsParams {
 
 export const getDesignations = (params?: string | GetDesignationsParams) => {
   if (typeof params === "string") {
-    return axios.get(API, {
+    return apiClient.get("/designations", {
       params: params ? { search: params } : {},
     });
   }
-  return axios.get(API, {
+  return apiClient.get("/designations", {
     params: params || {},
   });
 };
 
 export const createDesignation = (designation: DesignationPayload) =>
-  axios.post(API, designation);
+  apiClient.post("/designations", designation);
 
 export const updateDesignation = (id: string | number, designation: DesignationPayload) =>
-  axios.put(`${API}/${id}`, designation);
+  apiClient.put(`/designations/${id}`, designation);
 
 export const deleteDesignation = (id: string | number) =>
-  axios.delete(`${API}/${id}`);
+  apiClient.delete(`/designations/${id}`);
