@@ -8,7 +8,6 @@ import { useNotificationStore } from "../store/notificationStore";
 import {
   listenForForegroundMessages,
   triggerBrowserNotification,
-  requestNotificationPermission,
 } from "../service/notification.service";
 import { getNotifications } from "../api/notificationApi";
 import NotificationDrawer from "../components/NotificationDrawer";
@@ -49,12 +48,6 @@ const Navbar = ({ onToggleSidebar }: NavbarProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const [permStatus, setPermStatus] = useState<NotificationPermission>(
-    typeof window !== "undefined" && "Notification" in window
-      ? Notification.permission
-      : "default"
-  );
-
   const {
     unreadCount,
     toggleDrawer,
@@ -63,24 +56,6 @@ const Navbar = ({ onToggleSidebar }: NavbarProps) => {
     fetchNotifications,
     handleRealtimeNotification,
   } = useNotificationStore();
-
-  const handleEnableNotifications = async () => {
-    const token = await requestNotificationPermission(true);
-    if (typeof window !== "undefined" && "Notification" in window) {
-      setPermStatus(Notification.permission);
-      if (Notification.permission === "granted") {
-        triggerBrowserNotification("Browser Popups Enabled! 🔔", {
-          body: "You will now receive desktop popups for all task and employee updates.",
-        });
-        toast.success("Desktop popups enabled! 🎉");
-        if (token && user?.id) {
-          await registerFcm(user.id);
-        }
-      } else {
-        toast.error("Notification permission was not granted in browser settings.");
-      }
-    }
-  };
 
   // Setup FCM push notifications and foreground listener when logged in
   useEffect(() => {
@@ -227,19 +202,6 @@ const Navbar = ({ onToggleSidebar }: NavbarProps) => {
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <>
-                {/* Enable Browser Notifications Button (if not yet granted) */}
-                {permStatus !== "granted" && (
-                  <button
-                    type="button"
-                    onClick={handleEnableNotifications}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 border border-amber-300 transition-colors cursor-pointer"
-                    title="Click to allow desktop browser notification popups"
-                  >
-                    <Bell size={13} className="text-amber-600 animate-bounce" />
-                    <span>Enable Popups</span>
-                  </button>
-                )}
-
                 {/* Notification Bell Button */}
                 <button
                   type="button"
