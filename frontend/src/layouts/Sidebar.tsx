@@ -2,13 +2,7 @@ import { Briefcase, ClipboardList, LayoutDashboard, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { Sheet, SheetClose, SheetContent } from "../components/ui/sheet";
-
-const navItems = [
-  { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
-  { name: "Designation", path: "/designation", icon: <Briefcase size={20} /> },
-  { name: "Employees", path: "/employees", icon: <Users size={20} /> },
-  { name: "Tasks", path: "/tasks", icon: <ClipboardList size={20} /> },
-];
+import { useAuthStore } from "../store/authStore";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -36,9 +30,15 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 };
 
 const SidebarContent = ({ isMobile }: { isMobile?: boolean }) => {
+  const currentUser = useAuthStore((state) => state.user);
+  const isEmployee = currentUser?.role === "employee" || currentUser?.role === "user";
 
-
-
+  const navItems = [
+    { name: "Dashboard", path: "/", icon: <LayoutDashboard size={20} /> },
+    ...(!isEmployee ? [{ name: "Designation", path: "/designation", icon: <Briefcase size={20} /> }] : []),
+    { name: isEmployee ? "My Profile" : "Employees", path: "/employees", icon: <Users size={20} /> },
+    { name: isEmployee ? "My Tasks" : "Tasks", path: "/tasks", icon: <ClipboardList size={20} /> },
+  ];
 
   return (
     <div className="flex h-full min-h-0 flex-col">

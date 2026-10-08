@@ -322,18 +322,68 @@ const Employee = () => {
           </div>
 
           {/* Add / Edit Dialog */}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditId(null);
+                setShowPassword(false);
+                reset({
+                  code: "",
+                  name: "",
+                  designationId: "",
+                  email: "",
+                  password: "",
+                  mobile: "",
+                  status: "Active",
+                });
+              }
+            }}
+          >
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>
                   {editId !== null ? "Edit Employee" : "Add Employee"}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-4 py-4"
+                autoComplete="off"
+              >
+                {/* Hidden trap inputs to prevent browser password managers from autofilling admin credentials */}
+                <div
+                  style={{
+                    position: "absolute",
+                    opacity: 0,
+                    height: 0,
+                    width: 0,
+                    zIndex: -1,
+                    overflow: "hidden",
+                  }}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                >
+                  <input
+                    type="text"
+                    name="fake_prevent_autofill_email"
+                    tabIndex={-1}
+                    autoComplete="username"
+                  />
+                  <input
+                    type="password"
+                    name="fake_prevent_autofill_password"
+                    tabIndex={-1}
+                    autoComplete="current-password"
+                  />
+                </div>
+
                 {/* Employee Code */}
                 <div className="space-y-1">
                   <Label>Employee Code</Label>
                   <Input
+                    autoComplete="off"
                     {...register("code")}
                     placeholder="e.g. 1001"
                     className={errors.code ? "border-red-500" : ""}
@@ -347,6 +397,7 @@ const Employee = () => {
                 <div className="space-y-1">
                   <Label>Employee Name</Label>
                   <Input
+                    autoComplete="off"
                     {...register("name")}
                     placeholder="e.g. Rahul Sharma"
                     className={errors.name ? "border-red-500" : ""}
@@ -401,6 +452,9 @@ const Employee = () => {
                   <Label>Email</Label>
                   <Input
                     type="email"
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
                     {...register("email")}
                     placeholder="e.g. rahul.sharma@example.com"
                     className={errors.email ? "border-red-500" : ""}
@@ -418,6 +472,9 @@ const Employee = () => {
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
                       {...register("password")}
                       placeholder={
                         editId !== null
@@ -447,6 +504,7 @@ const Employee = () => {
                 <div className="space-y-1">
                   <Label>Mobile Number</Label>
                   <Input
+                    autoComplete="off"
                     {...register("mobile")}
                     placeholder="e.g. 9876543210"
                     className={errors.mobile ? "border-red-500" : ""}

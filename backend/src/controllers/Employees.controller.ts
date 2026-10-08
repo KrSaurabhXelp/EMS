@@ -91,12 +91,12 @@ export const createEmployees = async (req: Request, res: Response) => {
             return await manager.save(newEmployee);
         });
 
-        // Admin created employee -> notify All
+        // Admin created employee -> notify HR
         createAndSendNotification({
             title: "New Employee Created by Admin 👥",
             message: `Admin registered new employee: ${employeeName} (Code: ${employeeCode}).`,
             type: "employee_action",
-            forRole: "all",
+            forRole: "hr",
             senderId: currentUser?.id,
             metadata: { employeeId: savedEmployee.employeeId, employeeName, employeeCode },
         }).catch((err) => console.error("HR notification error:", err));
@@ -119,7 +119,17 @@ export const createEmployees = async (req: Request, res: Response) => {
 
 export const getAllEmployees = async (req: Request, res: Response) => {
     try {
+        const currentUser = (req as any).user;
         const employeesRepository = AppDataSource.getRepository(Employees);
+
+        if (currentUser && (currentUser.role === "employee" || currentUser.role === "user")) {
+            const myEmployee = await employeesRepository.find({
+                where: { employeeEmail: currentUser.email },
+                relations: { designation: true },
+            });
+            return res.status(200).json(myEmployee);
+        }
+
         const employees = await employeesRepository.find({ relations: { designation: true } });
         res.status(200).json(employees);
     } catch (error) {

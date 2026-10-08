@@ -20,7 +20,7 @@ import { loginAdmin } from "../../api/authApi";
 import { useAuthStore } from "../../store/authStore";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address."),
+  email: z.string().min(1, "Email or Employee ID is required."),
   password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
@@ -117,14 +117,14 @@ function Login() {
           {/* Email Field */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-white/90 tracking-wide">
-              Email Address
+              Email or Employee ID
             </Label>
-            <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+            <div className="relative flex items-center">
+              <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70 z-10" />
               <Input
                 {...register("email")}
-                placeholder="admin@gmail.com"
-                className={`h-11 pl-9 pr-3 rounded-xl border border-white/15 bg-white/[0.07] backdrop-blur-md text-white placeholder:text-white/40 focus-visible:bg-white/[0.12] focus-visible:border-white/40 focus-visible:ring-2 focus-visible:ring-purple-400/40 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] ${errors.email ? "border-rose-400 focus-visible:ring-rose-400" : ""
+                placeholder="e.g. 1001 or admin@gmail.com"
+                className={`login-input h-11 pl-10 pr-3 rounded-xl border border-white/15 bg-white/[0.07] backdrop-blur-md text-white placeholder:text-white/40 focus-visible:bg-white/[0.12] focus-visible:border-white/40 focus-visible:ring-2 focus-visible:ring-purple-400/40 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] ${errors.email ? "border-rose-400 focus-visible:ring-rose-400" : ""
                   }`}
               />
             </div>
@@ -138,19 +138,19 @@ function Login() {
             <Label className="text-xs font-semibold text-white/90 tracking-wide">
               Password
             </Label>
-            <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+            <div className="relative flex items-center">
+              <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/70 z-10" />
               <Input
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                className={`h-11 pl-9 pr-10 rounded-xl border border-white/15 bg-white/[0.07] backdrop-blur-md text-white placeholder:text-white/40 focus-visible:bg-white/[0.12] focus-visible:border-white/40 focus-visible:ring-2 focus-visible:ring-purple-400/40 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] ${errors.password ? "border-rose-400 focus-visible:ring-rose-400" : ""
+                className={`login-input h-11 pl-10 pr-10 rounded-xl border border-white/15 bg-white/[0.07] backdrop-blur-md text-white placeholder:text-white/40 focus-visible:bg-white/[0.12] focus-visible:border-white/40 focus-visible:ring-2 focus-visible:ring-purple-400/40 transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] ${errors.password ? "border-rose-400 focus-visible:ring-rose-400" : ""
                   }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-1"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors p-1 z-10 cursor-pointer"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (

@@ -47,12 +47,12 @@ export const createDesignation = async (req: Request, res: Response) => {
                 senderId: currentUser?.id,
             }).catch((err) => console.error("Admin notification error:", err));
         } else {
-            // Admin created designation -> notify All
+            // Admin created designation -> notify HR
             createAndSendNotification({
                 title: "Designation Created by Admin 🏷️",
                 message: `Admin created new designation: "${name}".`,
                 type: "designation_action",
-                forRole: "all",
+                forRole: "hr",
                 senderId: currentUser?.id,
             }).catch((err) => console.error("HR notification error:", err));
         }

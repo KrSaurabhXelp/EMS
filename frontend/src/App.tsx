@@ -19,7 +19,8 @@ import { useAuthStore } from "./store/authStore";
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { isLoggedIn } = useAuthStore();
+  const { isLoggedIn, user } = useAuthStore();
+  const isEmployee = user?.role === "employee" || user?.role === "user";
 
   const hideLayout = location.pathname === "/login" || !isLoggedIn;
 
@@ -50,7 +51,13 @@ function App() {
             />
             <Route
               path="/designation"
-              element={isLoggedIn ? <Designations /> : <Navigate to="/login" replace />}
+              element={
+                isLoggedIn ? (
+                  isEmployee ? <Navigate to="/" replace /> : <Designations />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
             />
             <Route
               path="/employees"

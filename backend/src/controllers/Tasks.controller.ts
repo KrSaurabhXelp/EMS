@@ -104,12 +104,12 @@ export const createTask = async (req: Request, res: Response) => {
                 },
             }).catch((err) => console.error("Employee notification error:", err));
 
-            // 2. Notify All (Admin, HR, etc.)
+            // 2. Notify HR
             createAndSendNotification({
                 title: "Task Assigned by Admin 📋",
                 message: `Admin assigned task #${taskCode}: "${taskTitle}" (${priority} priority) to ${employee.employeeName}.`,
                 type: "task_assigned",
-                forRole: "all",
+                forRole: "hr",
                 senderId: currentUser?.id,
                 metadata: {
                     taskId: savedTask.id,
@@ -130,7 +130,24 @@ export const createTask = async (req: Request, res: Response) => {
 
 export const getAllTasks = async (req: Request, res: Response) => {
     try {
+        const currentUser = (req as any).user;
         const taskRepository = AppDataSource.getRepository(Tasks);
+
+        if (currentUser && (currentUser.role === "employee" || currentUser.role === "user")) {
+            const employeeRepo = AppDataSource.getRepository(Employees);
+            const emp = await employeeRepo.findOne({
+                where: { employeeEmail: currentUser.email },
+            });
+            if (!emp) {
+                return res.status(200).json([]);
+            }
+            const tasks = await taskRepository.find({
+                where: { employee: { employeeId: emp.employeeId } },
+                relations: { employee: true },
+            });
+            return res.status(200).json(tasks);
+        }
+
         const tasks = await taskRepository.find({ relations: { employee: true } });
         res.status(200).json(tasks);
     } catch (error) {
@@ -316,21 +333,21 @@ export const updateTask = async (req: Request, res: Response) => {
                 },
             }).catch((err) => console.error("Admin notification error:", err));
 
-            // If reassigned to an employee -> notify that employee
-            if (previousEmployeeId !== employee.employeeId) {
-                createAndSendNotification({
-                    title: "New Task Assigned! 📋",
-                    message: `HR ${actorName} assigned task #${taskCode}: "${taskTitle}" (${priority} priority) to you.`,
-                    type: "task_assigned",
-                    employeeId: employee.employeeId,
-                    senderId: currentUser?.id,
-                    metadata: {
-                        taskId: updatedTask.id,
-                        taskCode: updatedTask.taskCode,
-                        taskTitle: updatedTask.taskTitle,
-                    },
-                }).catch((err) => console.error("Employee notification error:", err));
-            }
+            // Notify the assigned employee about their task update
+            createAndSendNotification({
+                title: previousEmployeeId !== employee.employeeId ? "New Task Assigned! 📋" : "Task Updated by HR 📝",
+                message: previousEmployeeId !== employee.employeeId
+                    ? `HR ${actorName} assigned task #${taskCode}: "${taskTitle}" (${priority} priority) to you.`
+                    : `HR ${actorName} updated details for your task #${taskCode}: "${taskTitle}".`,
+                type: previousEmployeeId !== employee.employeeId ? "task_assigned" : "task_updated",
+                employeeId: employee.employeeId,
+                senderId: currentUser?.id,
+                metadata: {
+                    taskId: updatedTask.id,
+                    taskCode: updatedTask.taskCode,
+                    taskTitle: updatedTask.taskTitle,
+                },
+            }).catch((err) => console.error("Employee notification error:", err));
         } else {
             // Admin updated task -> notify HR
             createAndSendNotification({
@@ -346,21 +363,21 @@ export const updateTask = async (req: Request, res: Response) => {
                 },
             }).catch((err) => console.error("HR notification error:", err));
 
-            // If reassigned to an employee -> notify that employee
-            if (previousEmployeeId !== employee.employeeId) {
-                createAndSendNotification({
-                    title: "New Task Assigned! 📋",
-                    message: `Admin assigned task #${taskCode}: "${taskTitle}" (${priority} priority) to you.`,
-                    type: "task_assigned",
-                    employeeId: employee.employeeId,
-                    senderId: currentUser?.id,
-                    metadata: {
-                        taskId: updatedTask.id,
-                        taskCode: updatedTask.taskCode,
-                        taskTitle: updatedTask.taskTitle,
-                    },
-                }).catch((err) => console.error("Employee notification error:", err));
-            }
+            // Notify the assigned employee about their task update
+            createAndSendNotification({
+                title: previousEmployeeId !== employee.employeeId ? "New Task Assigned! 📋" : "Task Updated by Admin 📝",
+                message: previousEmployeeId !== employee.employeeId
+                    ? `Admin assigned task #${taskCode}: "${taskTitle}" (${priority} priority) to you.`
+                    : `Admin updated details for your task #${taskCode}: "${taskTitle}".`,
+                type: previousEmployeeId !== employee.employeeId ? "task_assigned" : "task_updated",
+                employeeId: employee.employeeId,
+                senderId: currentUser?.id,
+                metadata: {
+                    taskId: updatedTask.id,
+                    taskCode: updatedTask.taskCode,
+                    taskTitle: updatedTask.taskTitle,
+                },
+            }).catch((err) => console.error("Employee notification error:", err));
         }
 
         res.status(200).json(updatedTask);

@@ -133,3 +133,35 @@ body {
     @apply font-sans;
   }
 }
+
+/* Fix browser autofill / auto-suggestion white background on dark inputs */
+.login-input:-webkit-autofill,
+.login-input:-webkit-autofill:hover,
+.login-input:-webkit-autofill:focus,
+.login-input:-webkit-autofill:active,
+.bg-slate-950 input:-webkit-autofill,
+.bg-slate-950 input:-webkit-autofill:hover,
+.bg-slate-950 input:-webkit-autofill:focus,
+.bg-slate-950 input:-webkit-autofill:active,
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #241d3d inset !important;
+  box-shadow: 0 0 0 1000px #241d3d inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  caret-color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transition: background-color 5000000s ease-in-out 0s;
+}
+
+.login-input:autofill,
+.bg-slate-950 input:autofill,
+.dark input:autofill {
+  box-shadow: 0 0 0 1000px #241d3d inset !important;
+  color: #ffffff !important;
+  caret-color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transition: background-color 5000000s ease-in-out 0s;
+}

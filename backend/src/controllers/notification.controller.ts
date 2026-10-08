@@ -74,14 +74,17 @@ export const createAndSendNotification = async (params: CreateNotificationParams
                 targetTokens.push(...adminTokens.map((t) => t.token));
             }
         } else if (params.forRole === "hr") {
-            const hrUsers = await userRepo.find({ where: { role: "hr" } });
-            const hrUserIds = hrUsers.map((u) => u.id);
-            if (hrUserIds.length > 0) {
-                const hrTokens = await fcmRepo
+            // Notifications for HR are also sent to Admin
+            const hrAndAdminUsers = await userRepo.find({
+                where: [{ role: "hr" }, { role: "admin" }],
+            });
+            const userIds = hrAndAdminUsers.map((u) => u.id);
+            if (userIds.length > 0) {
+                const tokens = await fcmRepo
                     .createQueryBuilder("t")
-                    .where("t.userId IN (:...hrUserIds) AND t.isActive = true", { hrUserIds })
+                    .where("t.userId IN (:...userIds) AND t.isActive = true", { userIds })
                     .getMany();
-                targetTokens.push(...hrTokens.map((t) => t.token));
+                targetTokens.push(...tokens.map((t) => t.token));
             }
         } else if (params.forRole === "admin_and_hr") {
             const adminAndHrUsers = await userRepo.find({
@@ -227,29 +230,26 @@ export const getNotifications = async (req: Request, res: Response) => {
 
         if (currentUser) {
             if (currentUser.role === "admin") {
-                // Admin sees notifications intended for admin, admin_and_hr, or all
-                qb.where("(n.forRole IN ('admin', 'admin_and_hr', 'all') OR n.userId = :userId)", {
+                // Admin sees all notifications intended for admin, hr, or admin_and_hr, or specific to them
+                qb.where("(n.forRole IN ('admin', 'hr', 'admin_and_hr') OR n.userId = :userId)", {
                     userId: currentUser.id,
                 });
             } else if (currentUser.role === "hr") {
-                // HR sees notifications intended for hr, admin_and_hr, or all
-                qb.where("(n.forRole IN ('hr', 'admin_and_hr', 'all') OR n.userId = :userId)", {
+                // HR sees notifications intended for hr or admin_and_hr, or specific to them
+                qb.where("(n.forRole IN ('hr', 'admin_and_hr') OR n.userId = :userId)", {
                     userId: currentUser.id,
                 });
             } else {
-                // Regular employee/user sees notifications for their employeeId or user account
+                // Regular employee/user ONLY sees notifications directly related to them
                 const empRepo = AppDataSource.getRepository(Employees);
                 const employee = await empRepo.findOneBy({ employeeEmail: currentUser.email });
                 if (employee) {
-                    qb.where(
-                        "(n.employeeId = :empId OR n.userId = :userId OR n.forRole IN ('employee', 'all'))",
-                        {
-                            empId: employee.employeeId,
-                            userId: currentUser.id,
-                        }
-                    );
+                    qb.where("(n.employeeId = :empId OR n.userId = :userId)", {
+                        empId: employee.employeeId,
+                        userId: currentUser.id,
+                    });
                 } else {
-                    qb.where("(n.userId = :userId OR n.forRole IN ('employee', 'all'))", {
+                    qb.where("n.userId = :userId", {
                         userId: currentUser.id,
                     });
                 }
@@ -271,26 +271,23 @@ export const getNotifications = async (req: Request, res: Response) => {
         const unreadQb = notifRepo.createQueryBuilder("n");
         if (currentUser) {
             if (currentUser.role === "admin") {
-                unreadQb.where("(n.forRole IN ('admin', 'admin_and_hr', 'all') OR n.userId = :userId)", {
+                unreadQb.where("(n.forRole IN ('admin', 'hr', 'admin_and_hr') OR n.userId = :userId)", {
                     userId: currentUser.id,
                 });
             } else if (currentUser.role === "hr") {
-                unreadQb.where("(n.forRole IN ('hr', 'admin_and_hr', 'all') OR n.userId = :userId)", {
+                unreadQb.where("(n.forRole IN ('hr', 'admin_and_hr') OR n.userId = :userId)", {
                     userId: currentUser.id,
                 });
             } else {
                 const empRepo = AppDataSource.getRepository(Employees);
                 const employee = await empRepo.findOneBy({ employeeEmail: currentUser.email });
                 if (employee) {
-                    unreadQb.where(
-                        "(n.employeeId = :empId OR n.userId = :userId OR n.forRole IN ('employee', 'all'))",
-                        {
-                            empId: employee.employeeId,
-                            userId: currentUser.id,
-                        }
-                    );
+                    unreadQb.where("(n.employeeId = :empId OR n.userId = :userId)", {
+                        empId: employee.employeeId,
+                        userId: currentUser.id,
+                    });
                 } else {
-                    unreadQb.where("(n.userId = :userId OR n.forRole IN ('employee', 'all'))", {
+                    unreadQb.where("n.userId = :userId", {
                         userId: currentUser.id,
                     });
                 }
@@ -328,7 +325,7 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
         notif.isRead = true;
         await notifRepo.save(notif);
         res.status(200).json({ message: "Notification marked as read", notification: notif });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error marking notification as read:", error);
         res.status(500).json({ message: "Failed to update notification" });
     }
@@ -347,26 +344,23 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response) =>
 
         if (currentUser) {
             if (currentUser.role === "admin") {
-                qb.andWhere("(forRole IN ('admin', 'admin_and_hr', 'all') OR userId = :userId)", {
+                qb.andWhere("(forRole IN ('admin', 'hr', 'admin_and_hr') OR userId = :userId)", {
                     userId: currentUser.id,
                 });
             } else if (currentUser.role === "hr") {
-                qb.andWhere("(forRole IN ('hr', 'admin_and_hr', 'all') OR userId = :userId)", {
+                qb.andWhere("(forRole IN ('hr', 'admin_and_hr') OR userId = :userId)", {
                     userId: currentUser.id,
                 });
             } else {
                 const empRepo = AppDataSource.getRepository(Employees);
                 const employee = await empRepo.findOneBy({ employeeEmail: currentUser.email });
                 if (employee) {
-                    qb.andWhere(
-                        "(employeeId = :empId OR userId = :userId OR forRole IN ('employee', 'all'))",
-                        {
-                            empId: employee.employeeId,
-                            userId: currentUser.id,
-                        }
-                    );
+                    qb.andWhere("(employeeId = :empId OR userId = :userId)", {
+                        empId: employee.employeeId,
+                        userId: currentUser.id,
+                    });
                 } else {
-                    qb.andWhere("(userId = :userId OR forRole IN ('employee', 'all'))", {
+                    qb.andWhere("userId = :userId", {
                         userId: currentUser.id,
                     });
                 }

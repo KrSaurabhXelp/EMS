@@ -1,8 +1,18 @@
 import apiClient from "./client";
 
 export interface DashboardStatsResponse {
+  isEmployee?: boolean;
+  employee?: {
+    id: number;
+    code: string;
+    name: string;
+    designation: string;
+    email: string;
+    mobile: string;
+    status: string;
+  } | null;
   counts: {
-    employees: number;
+    employees?: number;
     totalTasks: number;
     pending: number;
     inProgress: number;

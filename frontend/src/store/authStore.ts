@@ -5,6 +5,9 @@ export type AuthUser = {
   name?: string;
   email?: string;
   role?: string;
+  employeeId?: number;
+  employeeCode?: number | string;
+  designation?: string;
 };
 
 type AuthStore = {
@@ -61,6 +64,8 @@ const getInitialAuthState = (): {
         name: payload.name || payload.email?.split("@")[0] || "Admin",
         email: payload.email,
         role: payload.role,
+        employeeId: payload.employeeId,
+        employeeCode: payload.employeeCode,
       };
     }
   }
@@ -93,6 +98,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
           name: payload.name || payload.email?.split("@")[0] || "Admin",
           email: payload.email,
           role: payload.role,
+          employeeId: payload.employeeId,
+          employeeCode: payload.employeeCode,
         };
       }
     }
